@@ -48,7 +48,7 @@ uint64_t chiffrementBloc(uint64_t bloc, size_t tour){
     long fResult = f(tour);
 
     blocChiffre += *blocL ^ fResult; // nouveau bloc de droite
-
+    
     return blocChiffre;
 
 }
@@ -65,6 +65,15 @@ int main(int argc, char *argv[]){
         printf("%d. 0x%lx\n", i, b);
     }
     // TODO: Echange des deux blocs droite => gauche et gauche => droite
+    uint32_t* blocL = malloc(sizeof(uint32_t));
+    uint32_t* blocR = malloc(sizeof(uint32_t));
+    partitionBloc(b, blocL, blocR);
+
+    b = *blocR;
+    b = b << 32;
+    b += *blocL;
+
+    
     printf("Res: \n(Res:)0x%lx\n(Att:)0xb94bd5cf02dcad77\n", b);
 
     
