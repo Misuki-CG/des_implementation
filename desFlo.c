@@ -9,19 +9,7 @@
 
 
 */
-void print_bits(int size, uint64_t x)
-{
-	uint8_t bit;
-	printf("0b");
-	for(int j=size-1; j>=0; j--) {
-		for(int i=7; i>=0; i--) {
-			bit=x>>(i+j*8) & 1;
-			printf("%d",bit);
-		}
-		printf(" ");
-	}
-	printf("\n");
-}
+
 
 // La permutation finale avant sortie de f
 
@@ -53,6 +41,32 @@ int PI_INV[64] = {
     34,2,42,10,50,18,58,26,
     33,1,41,9,49,17,57,25};
 
+// matrice d'expansion
+int E[48] = {
+    32, 1, 2, 3, 4, 5,
+    4, 5, 6, 7, 8, 9,
+    8, 9, 10, 11, 12, 13,
+    12, 13, 14, 15, 16, 17,
+    16, 17, 18, 19, 20, 21,
+    20, 21, 22, 23, 24, 25,
+    24, 25, 26, 27, 28, 29,
+    28, 29, 30, 31, 32, 1
+};
+
+
+void print_bits(int size, uint64_t x)
+{
+	uint8_t bit;
+	printf("0b");
+	for(int j=size-1; j>=0; j--) {
+		for(int i=7; i>=0; i--) {
+			bit=x>>(i+j*8) & 1;
+			printf("%d",bit);
+		}
+		printf(" ");
+	}
+	printf("\n");
+}
 
 // découpe le message en bloc de 64 bits
 uint64_t* decouperBloc(char* message){
@@ -62,6 +76,22 @@ uint64_t* decouperBloc(char* message){
 // Fonction f(i)
 long f(int i){
     return i * 37453123;
+}
+
+
+// retourne l'état du bit demandé (1 ou 0)
+uint8_t getBitValue(uint64_t bloc, uint64_t position){
+    return (bloc >> position) & 0x00000001;
+}
+
+
+// change la valeur du bit demandé avec la valeur demandée
+void setbitvalue(uint64_t* v, uint8_t idx, uint8_t value)
+{
+	if (value == 0ul)
+		*v = *v & ~(1ul << idx);
+	else
+		*v = *v | (1ul << idx);
 }
 
 // Partitionne un bloc de 64 bits en deux blocs de 32 bits (bloc de droite & bloc de gauche)
@@ -76,17 +106,8 @@ void partitionBloc(uint64_t bloc, uint32_t* blocL, uint32_t* blocR){
 
 }
 
-uint8_t getBitValue(uint64_t bloc, uint64_t position){
-    return (bloc >> position) & 0x00000001;
-}
-void setbitvalue(uint64_t* v, uint8_t idx, uint8_t value)
-{
-	if (value == 0ul)
-		*v = *v & ~(1ul << idx);
-	else
-		*v = *v | (1ul << idx);
-}
-
+// Retourne un noubeau bloc selon la permutation décrite dans 
+// le tableau de position permutation. 
 uint64_t permutation(uint64_t bloc, int* permutation){
     uint64_t blocPermu = 0ul;
     printf("====\n");
@@ -108,7 +129,18 @@ uint64_t permutation(uint64_t bloc, int* permutation){
     return blocPermu;
 }
 
+uint64_t expansion(uint32_t subBloc){
+    uint64_t blocExpansion = 0ul;
+    for(size_t i = 0; i < 48; i++){
+        uint64_t index = E[i];
+        uint8_t bitValue = getBitValue(subBloc, 32-index);
 
+        setbitvalue(&blocExpansion, (uint64_t)(47-i), bitValue);
+    }
+    printf("E: ");
+    print_bits(6, blocExpansion);
+    return blocExpansion;
+}
 
 // Échange les 32 premiers bits de positions avec les 32 derniers 
 // (échange de place les deux sous-blocs contenu dans le bloc passé en paramètre)
@@ -160,11 +192,8 @@ uint64_t chiffrementBloc(uint64_t bloc, size_t tour){
 
 }
 
-
-int main(int argc, char *argv[]){
-
-    uint64_t b = 0x0123456789abcdef;
-
+void testChiffrement(uint64_t b){
+    
     printf("0x%lx\n", b);
     printf("===== chiffrement =====\n");
 
@@ -181,21 +210,36 @@ int main(int argc, char *argv[]){
     b = permutation(b, PI_INV);
 
     printf("Res: \n(Res:)0x%lx\n(Att:)0xa2b3aab7202ef6e7\n", b);
+}
 
-    
+void testDechiffrement(uint64_t b){
+  /* ===== Déchiffrement ===== */
+    printf("===== dechiffrement =====\n");
 
-
-    /* ===== Déchiffrement ===== */
-   /*  printf("===== dechiffrement =====\n");
+    b = permutation(b, PI);
     permuterBlocs(&b);
     for(int i = 15; i >= 0; i--){
         b = dechiffrementBloc(b, i);
         printf("%d. 0x%lx\n", (int)i, b);
     }
+    b=permutation(b, PI_INV);
 
    
 
     printf("Res: \n(Res:)0x%lx\n(Att:)0x123456789abcdef\n", b);
-   */ 
+}
+
+int main(int argc, char *argv[]){
+    uint64_t b = 0x0123456789abcdef;
+    uint32_t* blocL = malloc(sizeof(uint32_t));
+    uint32_t* blocR = malloc(sizeof(uint32_t));
+
+    partitionBloc(b, blocL, blocR);
+
+    printf("B: ");
+    print_bits(4, *blocL);
+    uint64_t blocE = expansion(*blocL);
+    
+    return 0;
 
 }
