@@ -4,8 +4,13 @@
 #include <string.h>
 #include <stdint.h>
 
-const uint64_t K = 0x0123456789abcdef;
+const uint64_t K = 0x123456789abcdef;
 const uint64_t K1 = 0x1B02EFFC7072;
+
+uint64_t keys[16] = {0,0,0,0,
+                    0,0,0,0,
+                    0,0,0,0,
+                    0,0,0,0};
 /*
 
 
@@ -113,9 +118,27 @@ int SBOX[8][4][16] = {
     },
     
 };
+// choix permut� dans la diversification de la cl�
 
+int PC1[56] = {
+    57,49,41,33,25,17,9,
+    1,58,50,42,34,26,18,
+    10,2,59,51,43,35,27,
+    19,11,3,60,52,44,36,
+    63,55,47,39,31,23,15,
+    7,62,54,46,38,30,22,
+    14,6,61,53,45,37,29,
+    21,13,5,28,20,12,4};
 
-
+int PC2[48]={
+    14,17,11,24,1,5,
+    3,28,15,6,21,10,
+    23,19,12,4,26,8,
+    16,7,27,20,13,2,
+    41,52,31,37,47,55,
+    30,40,51,45,33,48,
+    44,49,39,56,34,53,
+    46,42,50,36,29,32};
 
 // retourne l'état du bit demandé (1 ou 0)
 uint8_t getBitValue(uint64_t bloc, uint64_t position){
@@ -160,8 +183,7 @@ long f(int i){
 
 uint64_t expansion(uint32_t subBloc){
 
-    printf("Bloc 32: ");
-    print_bits(4, subBloc);
+
     uint64_t blocExpansion = 0ul;
     for(size_t i = 0; i < 48; i++){
         uint64_t index = E[i];
@@ -169,11 +191,117 @@ uint64_t expansion(uint32_t subBloc){
 
         setbitvalue(&blocExpansion, (uint64_t)(47-i), bitValue);
     }
-    printf("E: ");
-    print_bits(6, blocExpansion);
+
     return blocExpansion;
 }
 
+int8_t getNumberOfShift(size_t tour){
+    if(tour == 0 || tour == 1 || tour == 8 || tour == 15){
+        return 1;
+    }
+
+    return 2;
+}
+
+void shiftBlocs(uint32_t* blocC, uint32_t* blocD,  uint8_t numberOfShift)
+{
+    for(size_t i = 0; i < numberOfShift; i++){
+        uint8_t firstBitC = getBitValue(*blocC, 31);
+        uint8_t firstBitD = getBitValue(*blocD, 31);
+
+        *blocC <<= 1;
+        *blocD <<= 1;
+
+        setbitvalue((uint64_t*)blocC, 4, firstBitC);
+        setbitvalue((uint64_t*)blocD, 4, firstBitD);
+
+
+    }
+}
+
+void makeKeys(uint32_t blocC, uint32_t blocD){
+    // les 4 derniers bits des deux blocs ne servent à rien
+
+    uint32_t nextC = blocC;
+    uint32_t nextD = blocD;
+
+    
+    for(size_t i = 0; i < 16; i++){
+        // shift
+        uint8_t shiftLength = getNumberOfShift(i);
+        shiftBlocs(&nextC, &nextD, shiftLength);
+        
+        /*
+        printf("c%ld (0x%x) ", i+1, nextC);
+        print_bits(4, nextC);
+        printf("d%ld (0x%x) ", i+1, nextD);
+        print_bits(4, nextD);
+        */
+        // création du bloc concaténé 
+        uint64_t concatKey = nextC;
+        concatKey <<= 32;
+        uint64_t tempD = nextD;
+        tempD <<= 4;
+        concatKey += tempD;
+
+        /*
+        printf("concatKey (0x%lx) ", concatKey);
+        print_bits(8, concatKey);
+        */
+        // permutation PC2
+        uint64_t iKey = 0x0;
+        for(size_t j = 0; j < 48; j++){
+            uint64_t index = PC2[j];
+            uint8_t bitValue = getBitValue(concatKey, 64-index);
+            setbitvalue(&iKey, (uint64_t)(47-j), bitValue);
+        }
+
+        printf("iKey (0x%lx) ", iKey);
+        print_bits(8, iKey);
+
+        keys[i] = iKey;
+    }
+    
+}
+
+
+void initKey(uint64_t k){
+   
+    //printf("k : (0x%lx) ", k);
+    //print_bits(8, k);
+    uint64_t KPerm = 0x0;
+    for(size_t i = 0; i < 56; i++){
+        uint64_t index = PC1[i];
+        uint8_t bitValue = getBitValue(k, 64-index);
+
+        setbitvalue(&KPerm, (uint64_t)(63-i), bitValue);
+    }
+    //printf("initKey : (0x%lx) " , KPerm);
+    //print_bits(8, KPerm);
+
+    
+    // split en deux bloc de la clé
+    
+    KPerm >>= 8;
+    uint32_t d0 = (uint32_t)KPerm;
+    d0 <<= 4; 
+    KPerm >>= 24;
+    uint32_t c0 = (uint32_t)KPerm;
+
+    // les 4 derniers bits ne serviront à rien, on les mets à
+    // 0 pour être sûr
+
+    uint64_t mask = 0xffffffff0;
+    c0 &= mask;
+    d0 &= mask;
+    /*printf("c0 : ");
+    print_bits(4, c0);
+    printf("d0 : ");
+    print_bits(4, d0);
+    */
+
+    makeKeys(c0, d0);
+}
 
 
 // Partitionne un bloc de 64 bits en deux blocs de 32 bits (bloc de droite & bloc de gauche)
@@ -211,10 +339,7 @@ uint32_t appliquerSBoxes(uint64_t blocOf48){
         uint8_t iBox = 0u; 
         setbitvalue((uint64_t*)&iBox, (uint8_t)1, getBitValue(bloc6, (uint64_t)5));
         setbitvalue((uint64_t*)&iBox, (uint8_t)0, getBitValue(bloc6, (uint64_t)0));
-        printf("RES       : ");
-        print_bits(1, bloc6);
-        printf("iBox (%d) : ", iBox);
-        print_bits(1, iBox);
+
         // on calcul la position jBox avec les 4 bits non traités
         // restant du bloc de 6 bits
         uint8_t jBox = 0u; 
@@ -222,34 +347,27 @@ uint32_t appliquerSBoxes(uint64_t blocOf48){
         setbitvalue((uint64_t*)&jBox, (uint8_t)2, getBitValue(bloc6, (uint64_t)3));
         setbitvalue((uint64_t*)&jBox, (uint8_t)1, getBitValue(bloc6, (uint64_t)2));
         setbitvalue((uint64_t*)&jBox, (uint8_t)0, getBitValue(bloc6, (uint64_t)1));
-        printf("jBox (%d) : ", jBox);
-        print_bits(1, jBox);
+
 
         // on crée le bloc de 4 bits de sortie 
         uint8_t sBoxResult = SBOX[i][iBox][jBox];
-        printf("SBOX res (%d) : ", sBoxResult);
-        print_bits(1, sBoxResult);
+
         blocSubstituer += sBoxResult;
-        printf("blocSub : ");
-        print_bits(4, blocSubstituer);
+
         if(i < 7)
             blocSubstituer <<= 4;
-        printf("shifted : ");
-        print_bits(4, blocSubstituer);
-        printf("\n");
+
 
     }
 
     return blocSubstituer;
 }
 
-uint32_t fFunction(uint32_t bloc){
+uint32_t fFunction(uint32_t bloc, size_t tour){
 
     uint32_t cipherBloc = 0u;
     uint64_t blocExpans = expansion(bloc);
-    blocExpans = blocExpans ^ K;
-    printf("Bloc Expans : ");
-    print_bits(6,blocExpans);
+    blocExpans = blocExpans ^ keys[tour];
     uint32_t inputToPermutation = appliquerSBoxes(blocExpans);
 
     for(size_t i = 0; i < 32; i++){
@@ -259,12 +377,7 @@ uint32_t fFunction(uint32_t bloc){
         setbitvalue((uint64_t*)&cipherBloc, (uint8_t)(31-i), bitValue);
     }
 
-    printf("Input to permutation : ");
-    print_bits(4, inputToPermutation);
-
-    printf("fFunction:");
-    print_bits(4, cipherBloc);
-
+   
     return cipherBloc;
 }
 
@@ -315,7 +428,7 @@ uint64_t dechiffrementBloc(uint64_t bloc, size_t tour){
 
     partitionBloc(bloc, blocL, blocR);
 
-    blocDechiffre = *blocR ^ f(tour); // bloc de gauche
+    blocDechiffre = *blocR ^ fFunction(*blocL, tour); // bloc de gauche
     blocDechiffre <<= 32; // on met le bloc de gauche à gauche
     blocDechiffre += *blocL; // bloc de droite
 
@@ -335,7 +448,7 @@ uint64_t chiffrementBloc(uint64_t bloc, size_t tour){
     blocChiffre = *blocR; // nouveau bloc de gauche 
     blocChiffre = blocChiffre << 32;
 
-    uint32_t fResult = fFunction(*blocR);
+    uint32_t fResult = fFunction(*blocR, tour);
     //long fResult = f(tour);
     blocChiffre += *blocL ^ fResult; // nouveau bloc de droite
     
@@ -347,7 +460,7 @@ void testChiffrement(uint64_t b){
     
     printf("0x%lx\n", b);
     printf("===== chiffrement =====\n");
-
+    initKey(K);
     b = permutation(b, PI);
     for(size_t i = 0; i < 16; i++){
         b = chiffrementBloc(b, i);
@@ -360,13 +473,13 @@ void testChiffrement(uint64_t b){
     // Application de la permutation inverse IP-1
     b = permutation(b, PI_INV);
 
-    printf("Res: \n(Res:)0x%lx\n(Att:)0x6dd58e830a84036\n", b);
+    printf("Res: \n(Res:)0x%lx\n(Att:)0x56cc09e7cfdc4cef\n", b);
 }
 
 void testDechiffrement(uint64_t b){
   /* ===== Déchiffrement ===== */
     printf("===== dechiffrement =====\n");
-
+    initKey(K);
     b = permutation(b, PI);
     permuterBlocs(&b);
     for(int i = 15; i >= 0; i--){
@@ -381,9 +494,11 @@ void testDechiffrement(uint64_t b){
 }
 
 int main(int argc, char *argv[]){
-    uint64_t b = 0x0123456789abcdef;
-    testChiffrement(b);
-    
+
+    uint64_t bChiffre = 0x56cc09e7cfdc4cef;
+    uint64_t b2 = 0x123456789abcdef;
+    uint64_t keyTest = 0b0001001100110100010101110111100110011011101111001101111111110001;
+    testDechiffrement(bChiffre);
     return 0;
 
 }
