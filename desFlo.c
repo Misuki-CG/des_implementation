@@ -149,26 +149,26 @@ uint8_t getBitValue(uint64_t bloc, uint64_t position){
 // change la valeur du bit demandé avec la valeur demandée
 void setbitvalue(uint64_t* v, uint8_t idx, uint8_t value)
 {
-	if (value == 0ul)
-		*v = *v & ~(1ul << idx);
-	else
-		*v = *v | (1ul << idx);
+    if (value == 0ul)
+        *v = *v & ~(1ul << idx);
+    else
+        *v = *v | (1ul << idx);
 }
 
 
 
 void print_bits(int size, uint64_t x)
 {
-	uint8_t bit;
-	printf("0b");
-	for(int j=size-1; j>=0; j--) {
-		for(int i=7; i>=0; i--) {
-			bit=x>>(i+j*8) & 1;
-			printf("%d",bit);
-		}
-		printf(" ");
-	}
-	printf("\n");
+    uint8_t bit;
+    printf("0b");
+    for(int j=size-1; j>=0; j--) {
+        for(int i=7; i>=0; i--) {
+            bit=x>>(i+j*8) & 1;
+            printf("%d",bit);
+        }
+        printf(" ");
+    }
+    printf("\n");
 }
 
 // découpe le message en bloc de 64 bits
