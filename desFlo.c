@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdint.h>
 
+
 const uint64_t K = 0x123456789abcdef;
 const uint64_t K1 = 0x1B02EFFC7072;
 
@@ -493,11 +494,10 @@ void testDechiffrement(uint64_t b){
     printf("Res: \n(Res:)0x%lx\n(Att:)0x123456789abcdef\n", b);
 }
 
-int main(int argc, char *argv[]){
+int desMain(){
 
-    char* msg = "SALUT";
-    uint8_t c = (uint8_t)msg[1];
-    printf("%c\n", c);
+    uint64_t b = 0x123456789ABCDEF;
+    testChiffrement(b);
+
     return 0;
-
 }
