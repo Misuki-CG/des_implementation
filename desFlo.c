@@ -495,10 +495,9 @@ void testDechiffrement(uint64_t b){
 
 int main(int argc, char *argv[]){
 
-    uint64_t bChiffre = 0x56cc09e7cfdc4cef;
-    uint64_t b2 = 0x123456789abcdef;
-    uint64_t keyTest = 0b0001001100110100010101110111100110011011101111001101111111110001;
-    testDechiffrement(bChiffre);
+    char* msg = "SALUT";
+    uint8_t c = (uint8_t)msg[1];
+    printf("%c\n", c);
     return 0;
 
 }
