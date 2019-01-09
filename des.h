@@ -10,7 +10,6 @@
 uint8_t getBitValue(uint64_t bloc, uint64_t position);
 void setbitvalue(uint64_t* v, uint8_t idx, uint8_t value);
 void print_bits(int size, uint64_t x);
-uint64_t* decouperBloc(char* message);
 long f(int i);
 uint64_t expansion(uint32_t subBloc);
 int8_t getNumberOfShift(size_t tour);
@@ -24,9 +23,9 @@ uint64_t permutation(uint64_t bloc, int* permutation);
 void permuterBlocs(uint64_t* bloc);
 uint64_t dechiffrementBloc(uint64_t bloc, size_t tour);
 uint64_t chiffrementBloc(uint64_t bloc, size_t tour);
-void testChiffrement(uint64_t b);
-void testDechiffrement(uint64_t b);
+uint64_t* chiffrement(uint64_t* b, size_t blocNumber, uint64_t key);
+uint64_t* dechiffrement(uint64_t* b, size_t blocNumber, uint64_t key);
 int desMain();
-
+uint64_t* decouperBloc(char* message, size_t* size);
 #endif
  

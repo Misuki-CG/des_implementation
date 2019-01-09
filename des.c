@@ -171,10 +171,33 @@ void print_bits(int size, uint64_t x)
 	}
 	printf("\n");
 }
+uint64_t* decouperBloc(char* message, size_t* size){
+    size_t longueur = strlen(message);
+    size_t nbrBloc = 0;
+    size_t n = 0;
+    uint8_t lettre;
 
-// découpe le message en bloc de 64 bits
-uint64_t* decouperBloc(char* message){
-    return 0;
+    nbrBloc = longueur%8 == 0 ? longueur / 8 : (longueur / 8) + 1;
+    *size = nbrBloc;
+    uint64_t* tabOutput = malloc(sizeof(uint64_t) * nbrBloc);
+    for(size_t i = 0; i < nbrBloc; i++){
+        for(size_t j = 0; j < 8; j++){
+            
+            if(n > longueur){
+                i = nbrBloc;
+                break;
+            }
+            uint64_t blocTemp = 0x0;
+            lettre = (uint8_t)message[n];
+            blocTemp = lettre;
+            blocTemp <<= 64-(8*(j+1));
+            tabOutput[i] += blocTemp;
+
+            n++;
+        }
+    }
+
+    return tabOutput;
 }
 
 // Fonction f(i)
@@ -257,8 +280,7 @@ void makeKeys(uint32_t blocC, uint32_t blocD){
             setbitvalue(&iKey, (uint64_t)(47-j), bitValue);
         }
 
-        printf("iKey (0x%lx) ", iKey);
-        print_bits(8, iKey);
+
 
         keys[i] = iKey;
     }
@@ -386,9 +408,7 @@ uint32_t fFunction(uint32_t bloc, size_t tour){
 // le tableau de position permutation. 
 uint64_t permutation(uint64_t bloc, int* permutation){
     uint64_t blocPermu = 0ul;
-    printf("====\n");
-
-    printf("Permutation du bloc 0x%lx\n", bloc);
+    
 
     for(size_t i = 0; i < 64; i++){
         uint64_t index = permutation[i];
@@ -399,8 +419,7 @@ uint64_t permutation(uint64_t bloc, int* permutation){
         setbitvalue(&blocPermu, (uint8_t)(63-i), bitValue);
 
     }
-    printf("Fin de la permutation : 0x%lx\n", blocPermu);
-    printf("====\n");
+
 
     return blocPermu;
 }
@@ -457,47 +476,52 @@ uint64_t chiffrementBloc(uint64_t bloc, size_t tour){
 
 }
 
-void testChiffrement(uint64_t b){
+uint64_t* chiffrement(uint64_t* b, size_t blocNumber, uint64_t key){
     
-    printf("0x%lx\n", b);
+    uint64_t* blocChiffre = malloc(sizeof(uint64_t)*blocNumber);
     printf("===== chiffrement =====\n");
-    initKey(K);
-    b = permutation(b, PI);
-    for(size_t i = 0; i < 16; i++){
-        b = chiffrementBloc(b, i);
-        printf("%d. 0x%lx\n", (int)i, b);
+    for(size_t i = 0; i < blocNumber; i++){
+        uint64_t iBloc = b[i];
+        initKey(key);
+        iBloc = permutation(iBloc, PI);
+        for(size_t j = 0; j < 16; j++){
+            iBloc = chiffrementBloc(iBloc, j);
+        }
+
+        // Echange des deux blocs droite => gauche et gauche => droite
+        permuterBlocs(&iBloc);
+        // Application de la permutation inverse IP-1
+        iBloc = permutation(iBloc, PI_INV);
+
+        blocChiffre[i] = iBloc;
     }
+   
+    return blocChiffre;
 
-    // Echange des deux blocs droite => gauche et gauche => droite
-    permuterBlocs(&b);
 
-    // Application de la permutation inverse IP-1
-    b = permutation(b, PI_INV);
-
-    printf("Res: \n(Res:)0x%lx\n(Att:)0x56cc09e7cfdc4cef\n", b);
 }
 
-void testDechiffrement(uint64_t b){
+uint64_t* dechiffrement(uint64_t* b, size_t blocNumber, uint64_t key){
   /* ===== Déchiffrement ===== */
+    uint64_t* blocDechiffre = malloc(sizeof(uint64_t)*blocNumber);
+
     printf("===== dechiffrement =====\n");
-    initKey(K);
-    b = permutation(b, PI);
-    permuterBlocs(&b);
-    for(int i = 15; i >= 0; i--){
-        b = dechiffrementBloc(b, i);
-        printf("%d. 0x%lx\n", (int)i, b);
+
+    for(size_t i = 0; i < blocNumber; i++){
+        uint64_t iBloc = b[i];
+        initKey(key);
+        iBloc = permutation(iBloc, PI);
+        permuterBlocs(&iBloc);
+        for(int8_t j = 15; j >= 0; j--){
+            iBloc = dechiffrementBloc(iBloc, j);
+        }
+        iBloc=permutation(iBloc, PI_INV);
+
+        blocDechiffre[i] = iBloc;
     }
-    b=permutation(b, PI_INV);
+    
 
    
 
-    printf("Res: \n(Res:)0x%lx\n(Att:)0x123456789abcdef\n", b);
-}
-
-int desMain(){
-
-    uint64_t b = 0x123456789ABCDEF;
-    testChiffrement(b);
-
-    return 0;
+    return blocDechiffre;
 }

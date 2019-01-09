@@ -73,17 +73,3 @@ void lireFichier (char* test, char* res){
   res = texte;
   fclose(fic);
 }
-
-int main(){
-  /*char nom[30]="";
-  printf("Veuillez saisir le nom du fichier : ");
-  scanf("%s\n", nom);*/
-  char fichier[256] = "ceci est la chaine de caractère";
-  uint64_t* test = decouperBloc(fichier);
-
-  printf("%s\n", test[0]);
-  /*char res[] = "test";
-  printf("res = %s\n", res);
-  lireFichier(fichier, res);
-  printf("la fin = %s\n", res);*/
-}
