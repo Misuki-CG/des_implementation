@@ -171,8 +171,8 @@ void print_bits(int size, uint64_t x)
 	}
 	printf("\n");
 }
-uint64_t* decouperBloc(char* message, size_t* size){
-    size_t longueur = strlen(message);
+uint64_t* decouperBloc(uint8_t* message, size_t messageSize, size_t* size){
+    size_t longueur = messageSize;
     size_t nbrBloc = 0;
     size_t n = 0;
     uint8_t lettre;
@@ -188,13 +188,15 @@ uint64_t* decouperBloc(char* message, size_t* size){
                 break;
             }
             uint64_t blocTemp = 0x0;
-            lettre = (uint8_t)message[n];
+            lettre = message[n];
             blocTemp = lettre;
             blocTemp <<= 64-(8*(j+1));
             tabOutput[i] += blocTemp;
 
             n++;
         }
+        printf("bloc %ld : ", i == nbrBloc ? i-1 : i);
+        print_bits(8,tabOutput[i == nbrBloc ? i-1 : i]);
     }
 
     return tabOutput;

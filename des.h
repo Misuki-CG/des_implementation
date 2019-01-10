@@ -26,6 +26,6 @@ uint64_t chiffrementBloc(uint64_t bloc, size_t tour);
 uint64_t* chiffrement(uint64_t* b, size_t blocNumber, uint64_t key);
 uint64_t* dechiffrement(uint64_t* b, size_t blocNumber, uint64_t key);
 int desMain();
-uint64_t* decouperBloc(char* message, size_t* size);
+uint64_t* decouperBloc(uint8_t* message, size_t messageSize, size_t* size);
 #endif
  
