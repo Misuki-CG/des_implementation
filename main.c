@@ -7,7 +7,7 @@
 #define DECODE_STRING "--decode"
 
 
-void launchDecode(char* fichierEntree, uint64_t key){
+void launchDecode(char* fichierEntree, char* fichierSortie, uint64_t key){
     printf("\nLancement du déchiffrement avec la clé 0x%lx\n\n", key);
     size_t* tabSize = malloc(sizeof(size_t));
     size_t* msgSize = malloc(sizeof(size_t));
@@ -20,6 +20,12 @@ void launchDecode(char* fichierEntree, uint64_t key){
     char* msgDechif = contentFromBlocs(blocDechif, *tabSize);
 
     printf("Output: %s\n", msgDechif);
+    if(fichierSortie[0] != '\n'){
+        printf("Ecriture du résultat dans %s\n", fichierSortie);
+        ecrireFichier(fichierSortie, blocDechif, *tabSize);
+    }
+
+    printf("Réussi.\n");
     free(tabBloc);
     free(tabSize);
     free(msg);
@@ -52,7 +58,7 @@ void launchEncode(char* fichierEntree, char* fichierSortie, uint64_t key){
 
 void printUsage(){
     printf("Utilisation:\nPour déchiffrer:\n");
-    printf("./main fichierEntree --decode clé\n");
+    printf("./main fichierEntree --decode clé [fichierSortie]\n");
     printf("Pour chiffrer : \n");
     printf("./main fichierEntree --encode clé fichierSortie\n");
 }
@@ -71,7 +77,8 @@ int main(int argc, char *argv[])
         else{
            key = (uint64_t)(strtol(argv[3], NULL, 16));
         }
-        launchDecode(argv[1], key);
+        char* def = "\n";
+        launchDecode(argv[1], argc == 5 ? argv[4] : def, key);
     }
     else if(strcmp(argv[2], ENCODE_STRING) == 0){
         if(argc < 5){

@@ -52,7 +52,6 @@ char* contentFromBlocs(uint64_t* tabBlocs, size_t blocNumber){
     size_t n = 0;
     for(size_t i = 0; i < blocNumber; i++){
         uint64_t bloc = tabBlocs[i];
-        print_bits(8, bloc);
         for(size_t j = 0; j < 8; j++){
             uint64_t temp = bloc;
           

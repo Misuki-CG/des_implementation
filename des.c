@@ -195,8 +195,6 @@ uint64_t* decouperBloc(uint8_t* message, size_t messageSize, size_t* size){
 
             n++;
         }
-        printf("bloc %ld : ", i == nbrBloc ? i-1 : i);
-        print_bits(8,tabOutput[i == nbrBloc ? i-1 : i]);
     }
 
     return tabOutput;
