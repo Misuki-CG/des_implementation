@@ -66,7 +66,7 @@ void printUsage(){
 }
 int main(int argc, char *argv[])
 {
-    char* command = "cat des.txt"; // pour le lolz <3
+    char* command = "cat destext"; // pour le lolz <3
     system(command);
     if(argc < 4){
         printUsage();
