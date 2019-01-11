@@ -19,7 +19,7 @@ void launchDecode(char* fichierEntree, char* fichierSortie, uint64_t key){
     uint64_t* blocDechif =  dechiffrement(tabBloc, *tabSize, key);
     char* msgDechif = contentFromBlocs(blocDechif, *tabSize);
 
-    printf("Output: %s\n", msgDechif);
+    printf("Output:\n%s\n", msgDechif);
     if(fichierSortie[0] != '\n'){
         printf("Ecriture du résultat dans %s\n", fichierSortie);
         ecrireFichier(fichierSortie, blocDechif, *tabSize);
@@ -64,6 +64,8 @@ void printUsage(){
 }
 int main(int argc, char *argv[])
 {
+    char* command = "cat des.txt";
+    system(command);
     if(argc < 4){
         printUsage();
         return 1;
