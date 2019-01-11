@@ -29,6 +29,7 @@ void launchDecode(char* fichierEntree, char* fichierSortie, uint64_t key){
     free(tabBloc);
     free(tabSize);
     free(msg);
+    free(msgSize);
     free(msgDechif);
 }
 
@@ -52,6 +53,7 @@ void launchEncode(char* fichierEntree, char* fichierSortie, uint64_t key){
     free(tabBloc);
     free(tabSize);
     free(msg);
+    free(msgSize);
     free(blocChiffr);
 }
 
@@ -64,7 +66,7 @@ void printUsage(){
 }
 int main(int argc, char *argv[])
 {
-    char* command = "cat des.txt";
+    char* command = "cat des.txt"; // pour le lolz <3
     system(command);
     if(argc < 4){
         printUsage();
